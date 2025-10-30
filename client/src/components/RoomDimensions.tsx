@@ -20,11 +20,11 @@ export default function RoomDimensions({
 }: RoomDimensionsProps) {
   return (
     <div className="space-y-4">
-      <h3 className="text-sm font-medium">Room Dimensions (ft)</h3>
+      <h3 className="text-sm font-mono uppercase tracking-wide">Room Dimensions (ft)</h3>
       
       <div className="space-y-3">
         <div className="flex items-center gap-3">
-          <Label htmlFor="room-width" className="text-sm w-16">
+          <Label htmlFor="room-width" className="text-sm font-mono uppercase w-16">
             Width
           </Label>
           <Input
@@ -34,14 +34,14 @@ export default function RoomDimensions({
             max="50"
             value={width}
             onChange={(e) => onWidthChange?.(Number(e.target.value))}
-            className="flex-1"
+            className="flex-1 font-mono"
             data-testid="input-width"
           />
-          <span className="text-xs text-muted-foreground w-8">ft</span>
+          <span className="text-xs font-mono text-muted-foreground w-8">ft</span>
         </div>
 
         <div className="flex items-center gap-3">
-          <Label htmlFor="room-length" className="text-sm w-16">
+          <Label htmlFor="room-length" className="text-sm font-mono uppercase w-16">
             Length
           </Label>
           <Input
@@ -51,14 +51,14 @@ export default function RoomDimensions({
             max="50"
             value={length}
             onChange={(e) => onLengthChange?.(Number(e.target.value))}
-            className="flex-1"
+            className="flex-1 font-mono"
             data-testid="input-length"
           />
-          <span className="text-xs text-muted-foreground w-8">ft</span>
+          <span className="text-xs font-mono text-muted-foreground w-8">ft</span>
         </div>
 
         <div className="flex items-center gap-3">
-          <Label htmlFor="room-height" className="text-sm w-16">
+          <Label htmlFor="room-height" className="text-sm font-mono uppercase w-16">
             Height
           </Label>
           <Input
@@ -68,10 +68,10 @@ export default function RoomDimensions({
             max="20"
             value={height}
             onChange={(e) => onHeightChange?.(Number(e.target.value))}
-            className="flex-1"
+            className="flex-1 font-mono"
             data-testid="input-height"
           />
-          <span className="text-xs text-muted-foreground w-8">ft</span>
+          <span className="text-xs font-mono text-muted-foreground w-8">ft</span>
         </div>
       </div>
     </div>

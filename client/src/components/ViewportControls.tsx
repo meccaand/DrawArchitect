@@ -15,11 +15,12 @@ export default function ViewportControls({
   onFitToScreen,
 }: ViewportControlsProps) {
   return (
-    <div className="flex gap-2 p-2 rounded-lg bg-card/80 backdrop-blur-sm border">
+    <div className="flex flex-col gap-1">
       <Button
         size="icon"
         variant="ghost"
         onClick={onReset}
+        className="bg-transparent hover:bg-white/10 text-white"
         data-testid="button-reset-view"
       >
         <RotateCcw className="w-4 h-4" />
@@ -28,6 +29,7 @@ export default function ViewportControls({
         size="icon"
         variant="ghost"
         onClick={onZoomIn}
+        className="bg-transparent hover:bg-white/10 text-white"
         data-testid="button-zoom-in"
       >
         <ZoomIn className="w-4 h-4" />
@@ -36,6 +38,7 @@ export default function ViewportControls({
         size="icon"
         variant="ghost"
         onClick={onZoomOut}
+        className="bg-transparent hover:bg-white/10 text-white"
         data-testid="button-zoom-out"
       >
         <ZoomOut className="w-4 h-4" />
@@ -44,6 +47,7 @@ export default function ViewportControls({
         size="icon"
         variant="ghost"
         onClick={onFitToScreen}
+        className="bg-transparent hover:bg-white/10 text-white"
         data-testid="button-fit-screen"
       >
         <Maximize2 className="w-4 h-4" />
