@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import ViewportCanvas from '@/components/ViewportCanvas';
-import InputPanel from '@/components/InputPanel';
+import ConversationalChat from '@/components/ConversationalChat';
 import ViewportControls from '@/components/ViewportControls';
 import ThemeToggle from '@/components/ThemeToggle';
 import RoomDimensions from '@/components/RoomDimensions';
@@ -19,7 +19,6 @@ import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
 
 export default function Home() {
-  const [isGenerating, setIsGenerating] = useState(false);
   const [wireframeData, setWireframeData] = useState<any>(null);
   const [lineThickness, setLineThickness] = useState(1);
   const [showGrid, setShowGrid] = useState(true);
@@ -28,42 +27,33 @@ export default function Home() {
   const [roomHeight, setRoomHeight] = useState(9);
   const { toast } = useToast();
 
-  const generateSampleWireframe = (prompt: string) => {
-    setIsGenerating(true);
+  const handleChatAction = (action: string, data: any) => {
+    console.log('Chat action:', action, data);
     
-    setTimeout(() => {
+    // Example: Generate wireframe based on selection
+    if (action === 'option_selected') {
       const sampleData = {
         lines: [
-          [[3, 0, 3], [12, 0, 3], [12, 0, 6], [3, 0, 6], [3, 0, 3]],
-          [[3, 1.5, 3], [12, 1.5, 3], [12, 1.5, 6], [3, 1.5, 6], [3, 1.5, 3]],
-          [[3, 0, 3], [3, 1.5, 3]],
-          [[12, 0, 3], [12, 1.5, 3]],
-          [[12, 0, 6], [12, 1.5, 6]],
-          [[3, 0, 6], [3, 1.5, 6]],
-          [[6, 0, 8], [6, 2.5, 8], [9, 2.5, 8], [9, 0, 8], [6, 0, 8]],
-          [[6, 2.5, 8], [6, 2.5, 11], [9, 2.5, 11], [9, 2.5, 8]],
-          [[6, 0, 8], [6, 0, 11], [9, 0, 11], [9, 0, 8]],
-          [[6, 0, 11], [6, 2.5, 11]],
-          [[9, 0, 11], [9, 2.5, 11]],
+          // Sample cabinet wireframe
+          [[2, 0, 1], [6, 0, 1], [6, 0, 3], [2, 0, 3], [2, 0, 1]],
+          [[2, 2.5, 1], [6, 2.5, 1], [6, 2.5, 3], [2, 2.5, 3], [2, 2.5, 1]],
+          [[2, 0, 1], [2, 2.5, 1]],
+          [[6, 0, 1], [6, 2.5, 1]],
+          [[6, 0, 3], [6, 2.5, 3]],
+          [[2, 0, 3], [2, 2.5, 3]],
         ],
       };
       
       setWireframeData(sampleData);
-      setIsGenerating(false);
-      
       toast({
-        title: 'Design Generated',
-        description: 'Your interior design wireframe is ready.',
+        title: 'Item Added',
+        description: `${data.option.label} added to your design`,
       });
-    }, 2000);
+    }
   };
 
   const handleViewportControl = (action: string) => {
     console.log(`Viewport control: ${action}`);
-    toast({
-      title: 'View Updated',
-      description: `Camera ${action} applied`,
-    });
   };
 
   return (
@@ -165,11 +155,8 @@ export default function Home() {
           </div>
         </main>
 
-        <div className="border-t bg-card">
-          <InputPanel
-            onGenerate={generateSampleWireframe}
-            isGenerating={isGenerating}
-          />
+        <div className="h-80 border-t bg-card">
+          <ConversationalChat onAction={handleChatAction} />
         </div>
       </div>
     </div>

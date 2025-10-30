@@ -28,7 +28,7 @@ export default function ViewportCanvas({
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
   const controlsRef = useRef<OrbitControls | null>(null);
-  const roomLinesRef = useRef<THREE.LineSegments | null>(null);
+  const roomLinesRef = useRef<THREE.Group | null>(null);
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -43,8 +43,9 @@ export default function ViewportCanvas({
       0.1,
       1000
     );
-    camera.position.set(roomWidth * 0.8, roomHeight * 0.7, roomLength * 0.8);
-    camera.lookAt(roomWidth / 2, roomHeight / 2, roomLength / 2);
+    // Position camera near the front edge, looking toward back wall
+    camera.position.set(roomWidth / 2, roomHeight * 0.6, roomLength - 2);
+    camera.lookAt(roomWidth / 2, roomHeight / 2, 0);
     cameraRef.current = camera;
 
     const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -57,15 +58,15 @@ export default function ViewportCanvas({
     controls.enableDamping = true;
     controls.dampingFactor = 0.05;
     controls.screenSpacePanning = false;
-    controls.minDistance = 5;
+    controls.minDistance = 3;
     controls.maxDistance = 50;
     controls.target.set(roomWidth / 2, roomHeight / 2, roomLength / 2);
     controlsRef.current = controls;
 
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
     scene.add(ambientLight);
 
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.6);
     directionalLight.position.set(10, 20, 10);
     scene.add(directionalLight);
 
@@ -106,69 +107,96 @@ export default function ViewportCanvas({
 
     if (roomLinesRef.current) {
       sceneRef.current.remove(roomLinesRef.current);
-      roomLinesRef.current.geometry.dispose();
+      roomLinesRef.current.traverse((child) => {
+        if (child instanceof THREE.LineSegments || child instanceof THREE.Line) {
+          child.geometry.dispose();
+          if (Array.isArray(child.material)) {
+            child.material.forEach(m => m.dispose());
+          } else {
+            child.material.dispose();
+          }
+        }
+      });
     }
 
     if (showGrid) {
-      const roomGeometry = new THREE.BufferGeometry();
-      const vertices: number[] = [];
+      const group = new THREE.Group();
 
-      // Room outline (walls)
-      // Back wall
-      vertices.push(0, 0, 0, roomWidth, 0, 0);
-      vertices.push(roomWidth, 0, 0, roomWidth, roomHeight, 0);
-      vertices.push(roomWidth, roomHeight, 0, 0, roomHeight, 0);
-      vertices.push(0, roomHeight, 0, 0, 0, 0);
+      // Major grid lines (feet) - thicker and brighter
+      const majorGeometry = new THREE.BufferGeometry();
+      const majorVertices: number[] = [];
 
-      // Front wall (optional, for full box)
-      vertices.push(0, 0, roomLength, roomWidth, 0, roomLength);
-      vertices.push(roomWidth, 0, roomLength, roomWidth, roomHeight, roomLength);
-      vertices.push(roomWidth, roomHeight, roomLength, 0, roomHeight, roomLength);
-      vertices.push(0, roomHeight, roomLength, 0, 0, roomLength);
+      // Room outline (walls) - major lines
+      majorVertices.push(0, 0, 0, roomWidth, 0, 0);
+      majorVertices.push(roomWidth, 0, 0, roomWidth, roomHeight, 0);
+      majorVertices.push(roomWidth, roomHeight, 0, 0, roomHeight, 0);
+      majorVertices.push(0, roomHeight, 0, 0, 0, 0);
 
-      // Connecting edges
-      vertices.push(0, 0, 0, 0, 0, roomLength);
-      vertices.push(roomWidth, 0, 0, roomWidth, 0, roomLength);
-      vertices.push(roomWidth, roomHeight, 0, roomWidth, roomHeight, roomLength);
-      vertices.push(0, roomHeight, 0, 0, roomHeight, roomLength);
+      majorVertices.push(0, 0, roomLength, roomWidth, 0, roomLength);
+      majorVertices.push(roomWidth, 0, roomLength, roomWidth, roomHeight, roomLength);
+      majorVertices.push(roomWidth, roomHeight, roomLength, 0, roomHeight, roomLength);
+      majorVertices.push(0, roomHeight, roomLength, 0, 0, roomLength);
 
-      // Floor grid
-      const gridStep = 1;
-      for (let i = 0; i <= roomWidth; i += gridStep) {
-        vertices.push(i, 0, 0, i, 0, roomLength);
+      majorVertices.push(0, 0, 0, 0, 0, roomLength);
+      majorVertices.push(roomWidth, 0, 0, roomWidth, 0, roomLength);
+      majorVertices.push(roomWidth, roomHeight, 0, roomWidth, roomHeight, roomLength);
+      majorVertices.push(0, roomHeight, 0, 0, roomHeight, roomLength);
+
+      // Major floor grid (every foot)
+      for (let i = 0; i <= roomWidth; i += 1) {
+        majorVertices.push(i, 0, 0, i, 0, roomLength);
       }
-      for (let i = 0; i <= roomLength; i += gridStep) {
-        vertices.push(0, 0, i, roomWidth, 0, i);
-      }
-
-      // Ceiling grid (lighter)
-      for (let i = 0; i <= roomWidth; i += gridStep) {
-        vertices.push(i, roomHeight, 0, i, roomHeight, roomLength);
-      }
-      for (let i = 0; i <= roomLength; i += gridStep) {
-        vertices.push(0, roomHeight, i, roomWidth, roomHeight, i);
+      for (let i = 0; i <= roomLength; i += 1) {
+        majorVertices.push(0, 0, i, roomWidth, 0, i);
       }
 
-      // Wall grids
-      for (let i = 0; i <= roomHeight; i += gridStep) {
-        // Back wall
-        vertices.push(0, i, 0, roomWidth, i, 0);
-        // Left wall
-        vertices.push(0, i, 0, 0, i, roomLength);
-        // Right wall
-        vertices.push(roomWidth, i, 0, roomWidth, i, roomLength);
+      // Major wall grids (every foot vertically)
+      for (let i = 0; i <= roomHeight; i += 1) {
+        majorVertices.push(0, i, 0, roomWidth, i, 0);
+        majorVertices.push(0, i, 0, 0, i, roomLength);
+        majorVertices.push(roomWidth, i, 0, roomWidth, i, roomLength);
       }
 
-      roomGeometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
-      
-      const roomMaterial = new THREE.LineBasicMaterial({
+      majorGeometry.setAttribute('position', new THREE.Float32BufferAttribute(majorVertices, 3));
+      const majorMaterial = new THREE.LineBasicMaterial({
+        color: 0x555555,
+        transparent: true,
+        opacity: 0.8,
+        linewidth: 2,
+      });
+      const majorLines = new THREE.LineSegments(majorGeometry, majorMaterial);
+      group.add(majorLines);
+
+      // Minor grid lines (inches) - thinner and dimmer
+      const minorGeometry = new THREE.BufferGeometry();
+      const minorVertices: number[] = [];
+      const inchStep = 1 / 12; // 1 inch in feet
+
+      // Floor minor grid
+      for (let i = 0; i <= roomWidth; i += inchStep) {
+        // Skip major lines
+        if (Math.abs(i - Math.round(i)) > 0.001) {
+          minorVertices.push(i, 0, 0, i, 0, roomLength);
+        }
+      }
+      for (let i = 0; i <= roomLength; i += inchStep) {
+        if (Math.abs(i - Math.round(i)) > 0.001) {
+          minorVertices.push(0, 0, i, roomWidth, 0, i);
+        }
+      }
+
+      minorGeometry.setAttribute('position', new THREE.Float32BufferAttribute(minorVertices, 3));
+      const minorMaterial = new THREE.LineBasicMaterial({
         color: 0x333333,
         transparent: true,
-        opacity: 0.3,
+        opacity: 0.2,
+        linewidth: 1,
       });
+      const minorLines = new THREE.LineSegments(minorGeometry, minorMaterial);
+      group.add(minorLines);
 
-      roomLinesRef.current = new THREE.LineSegments(roomGeometry, roomMaterial);
-      sceneRef.current.add(roomLinesRef.current);
+      roomLinesRef.current = group;
+      sceneRef.current.add(group);
     }
   }, [showGrid, roomWidth, roomLength, roomHeight]);
 
