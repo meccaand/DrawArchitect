@@ -1,11 +1,22 @@
 import { useState } from 'react';
 import ViewportCanvas from '@/components/ViewportCanvas';
 import InputPanel from '@/components/InputPanel';
-import SettingsPanel from '@/components/SettingsPanel';
 import ViewportControls from '@/components/ViewportControls';
 import ThemeToggle from '@/components/ThemeToggle';
+import RoomDimensions from '@/components/RoomDimensions';
 import { useToast } from '@/hooks/use-toast';
-import { Box } from 'lucide-react';
+import { Box, Settings } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from '@/components/ui/sheet';
+import { Label } from '@/components/ui/label';
+import { Slider } from '@/components/ui/slider';
+import { Switch } from '@/components/ui/switch';
 
 export default function Home() {
   const [isGenerating, setIsGenerating] = useState(false);
@@ -47,13 +58,6 @@ export default function Home() {
     }, 2000);
   };
 
-  const handleExport = (format: string, resolution: string) => {
-    toast({
-      title: 'Export Started',
-      description: `Exporting design as ${format.toUpperCase()} at ${resolution}`,
-    });
-  };
-
   const handleViewportControl = (action: string) => {
     console.log(`Viewport control: ${action}`);
     toast({
@@ -64,28 +68,78 @@ export default function Home() {
 
   return (
     <div className="h-screen flex flex-col bg-background">
-      <header className="h-16 border-b flex items-center justify-between px-6 bg-card/50 backdrop-blur-sm sticky top-0 z-50">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-md bg-primary flex items-center justify-center">
-            <Box className="w-5 h-5 text-primary-foreground" />
+      <header className="h-14 border-b flex items-center justify-between px-4 bg-card/50 backdrop-blur-sm sticky top-0 z-50">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-md bg-primary flex items-center justify-center">
+            <Box className="w-4 h-4 text-primary-foreground" />
           </div>
           <div>
-            <h1 className="text-xl font-semibold">WireFrame AI</h1>
-            <p className="text-xs text-muted-foreground">Interior Design Generator</p>
+            <h1 className="text-base font-semibold">WireFrame AI</h1>
           </div>
         </div>
-        <ThemeToggle />
+        <div className="flex items-center gap-2">
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="icon" data-testid="button-settings">
+                <Settings className="w-4 h-4" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent>
+              <SheetHeader>
+                <SheetTitle>Room Settings</SheetTitle>
+              </SheetHeader>
+              <div className="mt-6 space-y-6">
+                <RoomDimensions
+                  width={roomWidth}
+                  length={roomLength}
+                  height={roomHeight}
+                  onWidthChange={setRoomWidth}
+                  onLengthChange={setRoomLength}
+                  onHeightChange={setRoomHeight}
+                />
+
+                <div className="pt-4 border-t space-y-3">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="line-thickness" className="text-sm font-medium">
+                      Line Thickness
+                    </Label>
+                    <span className="text-xs font-mono text-muted-foreground">
+                      {lineThickness}px
+                    </span>
+                  </div>
+                  <Slider
+                    id="line-thickness"
+                    min={1}
+                    max={5}
+                    step={1}
+                    value={[lineThickness]}
+                    onValueChange={(values) => setLineThickness(values[0])}
+                    data-testid="slider-line-thickness"
+                  />
+                </div>
+
+                <div className="pt-4 border-t">
+                  <div className="flex items-center justify-between h-10">
+                    <Label htmlFor="show-grid" className="text-sm">
+                      Show Room Grid
+                    </Label>
+                    <Switch
+                      id="show-grid"
+                      checked={showGrid}
+                      onCheckedChange={setShowGrid}
+                      data-testid="switch-grid"
+                    />
+                  </div>
+                </div>
+              </div>
+            </SheetContent>
+          </Sheet>
+          <ThemeToggle />
+        </div>
       </header>
 
-      <div className="flex-1 flex overflow-hidden">
-        <aside className="w-80 border-r bg-card flex-shrink-0 overflow-y-auto">
-          <InputPanel
-            onGenerate={generateSampleWireframe}
-            isGenerating={isGenerating}
-          />
-        </aside>
-
-        <main className="flex-1 relative bg-background">
+      <div className="flex-1 flex flex-col overflow-hidden">
+        <main className="flex-1 relative bg-background min-h-0">
           <ViewportCanvas
             wireframeData={wireframeData}
             lineThickness={lineThickness}
@@ -106,26 +160,17 @@ export default function Home() {
 
           <div className="absolute top-4 left-4 z-10 bg-card/80 backdrop-blur-sm border rounded-lg px-3 py-2">
             <p className="text-xs font-mono text-muted-foreground">
-              Room: {roomWidth}' × {roomLength}' × {roomHeight}' {wireframeData && `| Objects: ${wireframeData.lines?.length || 0}`}
+              {roomWidth}' × {roomLength}' × {roomHeight}'
             </p>
           </div>
         </main>
 
-        <aside className="w-64 border-l bg-card flex-shrink-0 overflow-y-auto">
-          <SettingsPanel
-            lineThickness={lineThickness}
-            onLineThicknessChange={setLineThickness}
-            showGrid={showGrid}
-            onShowGridChange={setShowGrid}
-            roomWidth={roomWidth}
-            roomLength={roomLength}
-            roomHeight={roomHeight}
-            onRoomWidthChange={setRoomWidth}
-            onRoomLengthChange={setRoomLength}
-            onRoomHeightChange={setRoomHeight}
-            onExport={handleExport}
+        <div className="border-t bg-card">
+          <InputPanel
+            onGenerate={generateSampleWireframe}
+            isGenerating={isGenerating}
           />
-        </aside>
+        </div>
       </div>
     </div>
   );
