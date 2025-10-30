@@ -31,18 +31,32 @@ export default function Home() {
     console.log('Chip action:', action, data);
     
     if (action === 'create_furniture') {
-      const sampleData = {
+      const { dimensions, position } = data;
+      const { width, height, depth } = dimensions;
+      const { x, z } = position;
+      
+      // Generate wireframe box based on actual dimensions
+      const wireframeData = {
         lines: [
-          [[2, 0, 1], [6, 0, 1], [6, 0, 3], [2, 0, 3], [2, 0, 1]],
-          [[2, 2.5, 1], [6, 2.5, 1], [6, 2.5, 3], [2, 2.5, 3], [2, 2.5, 1]],
-          [[2, 0, 1], [2, 2.5, 1]],
-          [[6, 0, 1], [6, 2.5, 1]],
-          [[6, 0, 3], [6, 2.5, 3]],
-          [[2, 0, 3], [2, 2.5, 3]],
+          // Bottom face
+          [[x, 0, z], [x + width, 0, z], [x + width, 0, z + depth], [x, 0, z + depth], [x, 0, z]],
+          // Top face
+          [[x, height, z], [x + width, height, z], [x + width, height, z + depth], [x, height, z + depth], [x, height, z]],
+          // Vertical edges
+          [[x, 0, z], [x, height, z]],
+          [[x + width, 0, z], [x + width, height, z]],
+          [[x + width, 0, z + depth], [x + width, height, z + depth]],
+          [[x, 0, z + depth], [x, height, z + depth]],
         ],
+        dimensions: {
+          width,
+          height,
+          depth,
+          position: { x, y: 0, z }
+        }
       };
       
-      setWireframeData(sampleData);
+      setWireframeData(wireframeData);
       toast({
         title: 'Item Added',
         description: `${data.type.label} added to your design`,

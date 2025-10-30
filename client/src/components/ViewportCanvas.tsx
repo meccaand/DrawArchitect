@@ -29,6 +29,31 @@ export default function ViewportCanvas({
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
   const controlsRef = useRef<OrbitControls | null>(null);
   const roomLinesRef = useRef<THREE.Group | null>(null);
+  const labelsRef = useRef<THREE.Group | null>(null);
+
+  // Create canvas for text labels
+  const createTextSprite = (text: string, color: string = '#ffffff', size: number = 0.3) => {
+    const canvas = document.createElement('canvas');
+    const context = canvas.getContext('2d')!;
+    canvas.width = 256;
+    canvas.height = 128;
+    
+    context.fillStyle = 'transparent';
+    context.fillRect(0, 0, canvas.width, canvas.height);
+    
+    context.font = 'Bold 48px monospace';
+    context.fillStyle = color;
+    context.textAlign = 'center';
+    context.textBaseline = 'middle';
+    context.fillText(text, canvas.width / 2, canvas.height / 2);
+    
+    const texture = new THREE.CanvasTexture(canvas);
+    const material = new THREE.SpriteMaterial({ map: texture, transparent: true });
+    const sprite = new THREE.Sprite(material);
+    sprite.scale.set(size * 2, size, 1);
+    
+    return sprite;
+  };
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -43,7 +68,6 @@ export default function ViewportCanvas({
       0.1,
       1000
     );
-    // Position camera near the front edge, looking toward back wall
     camera.position.set(roomWidth / 2, roomHeight * 0.6, roomLength - 2);
     camera.lookAt(roomWidth / 2, roomHeight / 2, 0);
     cameraRef.current = camera;
@@ -119,8 +143,19 @@ export default function ViewportCanvas({
       });
     }
 
+    if (labelsRef.current) {
+      sceneRef.current.remove(labelsRef.current);
+      labelsRef.current.traverse((child) => {
+        if (child instanceof THREE.Sprite) {
+          if (child.material.map) child.material.map.dispose();
+          child.material.dispose();
+        }
+      });
+    }
+
     if (showGrid) {
       const group = new THREE.Group();
+      const labelGroup = new THREE.Group();
 
       // Major grid lines (feet) - thicker and brighter
       const majorGeometry = new THREE.BufferGeometry();
@@ -145,9 +180,24 @@ export default function ViewportCanvas({
       // Major floor grid (every foot)
       for (let i = 0; i <= roomWidth; i += 1) {
         majorVertices.push(i, 0, 0, i, 0, roomLength);
+        
+        // Add labels for X axis (every 3 feet)
+        if (i % 3 === 0 && i > 0 && i < roomWidth) {
+          const label = createTextSprite(`${i}'`, '#888888', 0.4);
+          label.position.set(i, -0.3, roomLength + 0.5);
+          labelGroup.add(label);
+        }
       }
+      
       for (let i = 0; i <= roomLength; i += 1) {
         majorVertices.push(0, 0, i, roomWidth, 0, i);
+        
+        // Add labels for Z axis (every 3 feet)
+        if (i % 3 === 0 && i > 0 && i < roomLength) {
+          const label = createTextSprite(`${i}'`, '#888888', 0.4);
+          label.position.set(-0.5, -0.3, i);
+          labelGroup.add(label);
+        }
       }
 
       // Major wall grids (every foot vertically)
@@ -155,6 +205,13 @@ export default function ViewportCanvas({
         majorVertices.push(0, i, 0, roomWidth, i, 0);
         majorVertices.push(0, i, 0, 0, i, roomLength);
         majorVertices.push(roomWidth, i, 0, roomWidth, i, roomLength);
+        
+        // Add height labels on back wall (every 2 feet)
+        if (i % 2 === 0 && i > 0) {
+          const label = createTextSprite(`${i}'`, '#888888', 0.4);
+          label.position.set(-0.5, i, 0);
+          labelGroup.add(label);
+        }
       }
 
       majorGeometry.setAttribute('position', new THREE.Float32BufferAttribute(majorVertices, 3));
@@ -170,11 +227,10 @@ export default function ViewportCanvas({
       // Minor grid lines (inches) - thinner and dimmer
       const minorGeometry = new THREE.BufferGeometry();
       const minorVertices: number[] = [];
-      const inchStep = 1 / 12; // 1 inch in feet
+      const inchStep = 1 / 12;
 
       // Floor minor grid
       for (let i = 0; i <= roomWidth; i += inchStep) {
-        // Skip major lines
         if (Math.abs(i - Math.round(i)) > 0.001) {
           minorVertices.push(i, 0, 0, i, 0, roomLength);
         }
@@ -196,7 +252,9 @@ export default function ViewportCanvas({
       group.add(minorLines);
 
       roomLinesRef.current = group;
+      labelsRef.current = labelGroup;
       sceneRef.current.add(group);
+      sceneRef.current.add(labelGroup);
     }
   }, [showGrid, roomWidth, roomLength, roomHeight]);
 
@@ -212,13 +270,49 @@ export default function ViewportCanvas({
       linewidth: lineThickness,
     });
 
+    const objectGroup = new THREE.Group();
+    objectGroup.userData.isWireframe = true;
+
     wireframeData.lines?.forEach((line: number[][]) => {
       const points = line.map(p => new THREE.Vector3(p[0], p[1], p[2]));
       const geometry = new THREE.BufferGeometry().setFromPoints(points);
       const lineMesh = new THREE.Line(geometry, material);
-      lineMesh.userData.isWireframe = true;
-      sceneRef.current!.add(lineMesh);
+      objectGroup.add(lineMesh);
     });
+
+    // Add dimension labels if dimensions are provided
+    if (wireframeData.dimensions) {
+      const { width, height, depth, position } = wireframeData.dimensions;
+      
+      // Width label
+      const widthLabel = createTextSprite(`${width}'`, '#00aaff', 0.5);
+      widthLabel.position.set(
+        position.x + width / 2,
+        position.y - 0.5,
+        position.z
+      );
+      objectGroup.add(widthLabel);
+      
+      // Height label
+      const heightLabel = createTextSprite(`${height}'`, '#00aaff', 0.5);
+      heightLabel.position.set(
+        position.x - 0.5,
+        position.y + height / 2,
+        position.z
+      );
+      objectGroup.add(heightLabel);
+      
+      // Depth label
+      const depthLabel = createTextSprite(`${depth}'`, '#00aaff', 0.5);
+      depthLabel.position.set(
+        position.x,
+        position.y - 0.5,
+        position.z + depth / 2
+      );
+      objectGroup.add(depthLabel);
+    }
+
+    sceneRef.current.add(objectGroup);
   }, [wireframeData, lineThickness]);
 
   return (
