@@ -7,6 +7,9 @@ interface ViewportCanvasProps {
   lineThickness?: number;
   showGrid?: boolean;
   showAxis?: boolean;
+  roomWidth?: number;
+  roomLength?: number;
+  roomHeight?: number;
   onReady?: (scene: THREE.Scene, camera: THREE.Camera) => void;
 }
 
@@ -14,7 +17,10 @@ export default function ViewportCanvas({
   wireframeData,
   lineThickness = 1,
   showGrid = true,
-  showAxis = true,
+  showAxis = false,
+  roomWidth = 15,
+  roomLength = 15,
+  roomHeight = 9,
   onReady,
 }: ViewportCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -22,6 +28,7 @@ export default function ViewportCanvas({
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
   const controlsRef = useRef<OrbitControls | null>(null);
+  const roomLinesRef = useRef<THREE.LineSegments | null>(null);
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -36,8 +43,8 @@ export default function ViewportCanvas({
       0.1,
       1000
     );
-    camera.position.set(15, 12, 15);
-    camera.lookAt(0, 0, 0);
+    camera.position.set(roomWidth * 0.8, roomHeight * 0.7, roomLength * 0.8);
+    camera.lookAt(roomWidth / 2, roomHeight / 2, roomLength / 2);
     cameraRef.current = camera;
 
     const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -51,18 +58,9 @@ export default function ViewportCanvas({
     controls.dampingFactor = 0.05;
     controls.screenSpacePanning = false;
     controls.minDistance = 5;
-    controls.maxDistance = 100;
+    controls.maxDistance = 50;
+    controls.target.set(roomWidth / 2, roomHeight / 2, roomLength / 2);
     controlsRef.current = controls;
-
-    if (showGrid) {
-      const gridHelper = new THREE.GridHelper(30, 30, 0x444444, 0x222222);
-      scene.add(gridHelper);
-    }
-
-    if (showAxis) {
-      const axesHelper = new THREE.AxesHelper(15);
-      scene.add(axesHelper);
-    }
 
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
     scene.add(ambientLight);
@@ -104,6 +102,77 @@ export default function ViewportCanvas({
   }, []);
 
   useEffect(() => {
+    if (!sceneRef.current) return;
+
+    if (roomLinesRef.current) {
+      sceneRef.current.remove(roomLinesRef.current);
+      roomLinesRef.current.geometry.dispose();
+    }
+
+    if (showGrid) {
+      const roomGeometry = new THREE.BufferGeometry();
+      const vertices: number[] = [];
+
+      // Room outline (walls)
+      // Back wall
+      vertices.push(0, 0, 0, roomWidth, 0, 0);
+      vertices.push(roomWidth, 0, 0, roomWidth, roomHeight, 0);
+      vertices.push(roomWidth, roomHeight, 0, 0, roomHeight, 0);
+      vertices.push(0, roomHeight, 0, 0, 0, 0);
+
+      // Front wall (optional, for full box)
+      vertices.push(0, 0, roomLength, roomWidth, 0, roomLength);
+      vertices.push(roomWidth, 0, roomLength, roomWidth, roomHeight, roomLength);
+      vertices.push(roomWidth, roomHeight, roomLength, 0, roomHeight, roomLength);
+      vertices.push(0, roomHeight, roomLength, 0, 0, roomLength);
+
+      // Connecting edges
+      vertices.push(0, 0, 0, 0, 0, roomLength);
+      vertices.push(roomWidth, 0, 0, roomWidth, 0, roomLength);
+      vertices.push(roomWidth, roomHeight, 0, roomWidth, roomHeight, roomLength);
+      vertices.push(0, roomHeight, 0, 0, roomHeight, roomLength);
+
+      // Floor grid
+      const gridStep = 1;
+      for (let i = 0; i <= roomWidth; i += gridStep) {
+        vertices.push(i, 0, 0, i, 0, roomLength);
+      }
+      for (let i = 0; i <= roomLength; i += gridStep) {
+        vertices.push(0, 0, i, roomWidth, 0, i);
+      }
+
+      // Ceiling grid (lighter)
+      for (let i = 0; i <= roomWidth; i += gridStep) {
+        vertices.push(i, roomHeight, 0, i, roomHeight, roomLength);
+      }
+      for (let i = 0; i <= roomLength; i += gridStep) {
+        vertices.push(0, roomHeight, i, roomWidth, roomHeight, i);
+      }
+
+      // Wall grids
+      for (let i = 0; i <= roomHeight; i += gridStep) {
+        // Back wall
+        vertices.push(0, i, 0, roomWidth, i, 0);
+        // Left wall
+        vertices.push(0, i, 0, 0, i, roomLength);
+        // Right wall
+        vertices.push(roomWidth, i, 0, roomWidth, i, roomLength);
+      }
+
+      roomGeometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+      
+      const roomMaterial = new THREE.LineBasicMaterial({
+        color: 0x333333,
+        transparent: true,
+        opacity: 0.3,
+      });
+
+      roomLinesRef.current = new THREE.LineSegments(roomGeometry, roomMaterial);
+      sceneRef.current.add(roomLinesRef.current);
+    }
+  }, [showGrid, roomWidth, roomLength, roomHeight]);
+
+  useEffect(() => {
     if (!sceneRef.current || !wireframeData) return;
 
     sceneRef.current.children
@@ -123,24 +192,6 @@ export default function ViewportCanvas({
       sceneRef.current!.add(lineMesh);
     });
   }, [wireframeData, lineThickness]);
-
-  useEffect(() => {
-    if (!sceneRef.current) return;
-
-    const gridHelper = sceneRef.current.children.find(
-      child => child instanceof THREE.GridHelper
-    );
-    if (gridHelper) {
-      gridHelper.visible = showGrid;
-    }
-
-    const axesHelper = sceneRef.current.children.find(
-      child => child instanceof THREE.AxesHelper
-    );
-    if (axesHelper) {
-      axesHelper.visible = showAxis;
-    }
-  }, [showGrid, showAxis]);
 
   return (
     <div

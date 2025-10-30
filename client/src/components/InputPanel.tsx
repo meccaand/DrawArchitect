@@ -10,12 +10,12 @@ interface InputPanelProps {
 }
 
 const examplePrompts = [
-  "Modern two-story house with large windows and a flat roof",
-  "Small office building with glass facade and entrance canopy",
-  "Simple rectangular warehouse with loading dock",
-  "Contemporary single-story home with courtyard",
-  "Three-story apartment building with balconies",
-  "Minimalist cube-shaped structure with skylight",
+  "Modern living room with L-shaped sofa and coffee table",
+  "Minimalist bedroom with queen bed and two nightstands",
+  "Open kitchen with island and bar stools",
+  "Home office with desk, chair, and bookshelf",
+  "Cozy reading nook with armchair and floor lamp",
+  "Dining room with rectangular table for 6 people",
 ];
 
 export default function InputPanel({ onGenerate, isGenerating = false }: InputPanelProps) {
@@ -34,16 +34,16 @@ export default function InputPanel({ onGenerate, isGenerating = false }: InputPa
   return (
     <div className="h-full flex flex-col p-6 space-y-6">
       <div>
-        <h2 className="text-lg font-semibold mb-2">Describe Your Structure</h2>
+        <h2 className="text-lg font-semibold mb-2">Describe Your Interior</h2>
         <p className="text-sm text-muted-foreground">
-          Enter a description of the architectural structure you want to visualize
+          Enter a description of the interior design you want to visualize
         </p>
       </div>
 
       <div className="flex-1 flex flex-col space-y-4">
         <div className="relative">
           <Textarea
-            placeholder="e.g., A modern three-story office building with glass walls and a central atrium..."
+            placeholder="e.g., A modern living room with a sectional sofa, coffee table, and media console..."
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
             className="min-h-32 resize-none"
@@ -68,7 +68,7 @@ export default function InputPanel({ onGenerate, isGenerating = false }: InputPa
           ) : (
             <>
               <Sparkles className="w-4 h-4 mr-2" />
-              Generate Wireframe
+              Generate Design
             </>
           )}
         </Button>

@@ -10,14 +10,19 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Download } from 'lucide-react';
+import RoomDimensions from './RoomDimensions';
 
 interface SettingsPanelProps {
   lineThickness?: number;
   onLineThicknessChange?: (value: number) => void;
   showGrid?: boolean;
   onShowGridChange?: (value: boolean) => void;
-  showAxis?: boolean;
-  onShowAxisChange?: (value: boolean) => void;
+  roomWidth?: number;
+  roomLength?: number;
+  roomHeight?: number;
+  onRoomWidthChange?: (value: number) => void;
+  onRoomLengthChange?: (value: number) => void;
+  onRoomHeightChange?: (value: number) => void;
   onExport?: (format: string, resolution: string) => void;
 }
 
@@ -26,8 +31,12 @@ export default function SettingsPanel({
   onLineThicknessChange,
   showGrid = true,
   onShowGridChange,
-  showAxis = true,
-  onShowAxisChange,
+  roomWidth = 15,
+  roomLength = 15,
+  roomHeight = 9,
+  onRoomWidthChange,
+  onRoomLengthChange,
+  onRoomHeightChange,
   onExport,
 }: SettingsPanelProps) {
   const handleExport = () => {
@@ -39,14 +48,23 @@ export default function SettingsPanel({
   return (
     <div className="h-full flex flex-col p-6 space-y-6">
       <div>
-        <h2 className="text-lg font-semibold mb-2">Display Settings</h2>
+        <h2 className="text-lg font-semibold mb-2">Room Settings</h2>
         <p className="text-sm text-muted-foreground">
-          Customize the wireframe appearance
+          Customize room dimensions and display
         </p>
       </div>
 
       <div className="space-y-6">
-        <div className="space-y-3">
+        <RoomDimensions
+          width={roomWidth}
+          length={roomLength}
+          height={roomHeight}
+          onWidthChange={onRoomWidthChange}
+          onLengthChange={onRoomLengthChange}
+          onHeightChange={onRoomHeightChange}
+        />
+
+        <div className="pt-4 border-t space-y-3">
           <div className="flex items-center justify-between">
             <Label htmlFor="line-thickness" className="text-sm font-medium">
               Line Thickness
@@ -67,29 +85,17 @@ export default function SettingsPanel({
         </div>
 
         <div className="pt-4 border-t space-y-4">
-          <h3 className="text-sm font-medium">Viewport Options</h3>
+          <h3 className="text-sm font-medium">Display Options</h3>
           
           <div className="flex items-center justify-between h-10">
             <Label htmlFor="show-grid" className="text-sm">
-              Show Grid Overlay
+              Show Room Grid
             </Label>
             <Switch
               id="show-grid"
               checked={showGrid}
               onCheckedChange={onShowGridChange}
               data-testid="switch-grid"
-            />
-          </div>
-
-          <div className="flex items-center justify-between h-10">
-            <Label htmlFor="show-axis" className="text-sm">
-              Show Axis Helpers
-            </Label>
-            <Switch
-              id="show-axis"
-              checked={showAxis}
-              onCheckedChange={onShowAxisChange}
-              data-testid="switch-axis"
             />
           </div>
         </div>
@@ -137,7 +143,7 @@ export default function SettingsPanel({
               data-testid="button-export"
             >
               <Download className="w-4 h-4 mr-2" />
-              Export Wireframe
+              Export Design
             </Button>
           </div>
         </div>

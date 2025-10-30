@@ -2,17 +2,15 @@ import ViewportCanvas from '../ViewportCanvas';
 
 const sampleWireframe = {
   lines: [
-    [[0, 0, 0], [0, 5, 0], [0, 5, 8], [0, 0, 8], [0, 0, 0]],
-    [[10, 0, 0], [10, 5, 0], [10, 5, 8], [10, 0, 8], [10, 0, 0]],
-    [[0, 0, 0], [10, 0, 0]],
-    [[0, 5, 0], [10, 5, 0]],
-    [[0, 5, 8], [10, 5, 8]],
-    [[0, 0, 8], [10, 0, 8]],
-    [[2, 0, 0], [2, 3, 0], [4, 3, 0], [4, 0, 0]],
-    [[6, 0, 0], [6, 4, 0], [8, 4, 0], [8, 0, 0]],
+    [[3, 0, 3], [12, 0, 3], [12, 0, 6], [3, 0, 6], [3, 0, 3]],
+    [[3, 1.5, 3], [12, 1.5, 3], [12, 1.5, 6], [3, 1.5, 6], [3, 1.5, 3]],
+    [[3, 0, 3], [3, 1.5, 3]],
+    [[12, 0, 3], [12, 1.5, 3]],
+    [[12, 0, 6], [12, 1.5, 6]],
+    [[3, 0, 6], [3, 1.5, 6]],
   ],
 };
 
 export default function ViewportCanvasExample() {
-  return <ViewportCanvas wireframeData={sampleWireframe} showGrid={true} showAxis={true} />;
+  return <ViewportCanvas wireframeData={sampleWireframe} showGrid={true} roomWidth={15} roomLength={15} roomHeight={9} />;
 }

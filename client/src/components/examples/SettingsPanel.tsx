@@ -7,8 +7,12 @@ export default function SettingsPanelExample() {
       onLineThicknessChange={(value) => console.log('Line thickness:', value)}
       showGrid={true}
       onShowGridChange={(value) => console.log('Show grid:', value)}
-      showAxis={true}
-      onShowAxisChange={(value) => console.log('Show axis:', value)}
+      roomWidth={15}
+      roomLength={15}
+      roomHeight={9}
+      onRoomWidthChange={(value) => console.log('Room width:', value)}
+      onRoomLengthChange={(value) => console.log('Room length:', value)}
+      onRoomHeightChange={(value) => console.log('Room height:', value)}
       onExport={(format, resolution) => console.log('Export:', format, resolution)}
     />
   );
